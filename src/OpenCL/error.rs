@@ -1,5 +1,6 @@
 //! Error handling utilities.
 
+use std::fmt;
 use CL::*;
 
 macro_rules! convert(
@@ -69,11 +70,11 @@ pub fn try_convert(status: cl_int) -> Option<CLStatus> {
 pub fn convert(status: cl_int) -> CLStatus {
     match try_convert(status) {
         Some(s) => s,
-        None => fail!(format!("Uknown OpenCL Status Code: {:?}", status))
+        None => fail!("Uknown OpenCL Status Code: {:?}", status)
     }
 }
 
-fn error_str(status: cl_int) -> ~str {
+fn error_str(status: cl_int) -> String {
     match try_convert(status) {
         Some(s) => s.to_str(),
         None => format!("Unknown Error: {:?}", status)
@@ -82,6 +83,6 @@ fn error_str(status: cl_int) -> ~str {
 
 pub fn check(status: cl_int, message: &str) {
     if status != CL_SUCCESS as cl_int {
-        fail!(format!("{:?} ({:?})", message, error_str(status)))
+        fail!("{:?} ({:s})", message, error_str(status))
     }
 }

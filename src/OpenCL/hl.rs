@@ -51,7 +51,7 @@ impl Platform {
         self.get_devices_internal(CL_DEVICE_TYPE_ALL)
     }
 
-    pub fn get_devices_by_types(&self, types: &[DeviceType]) -> Vec<Device>
+    pub fn get_devices_by_types(&self, types: Vec<DeviceType>) -> Vec<Device>
     {
         let mut dtype = 0;
         for &t in types.iter() {
@@ -61,10 +61,11 @@ impl Platform {
         self.get_devices_internal(dtype)
     }
 
-    fn profile_info(&self, name: cl_platform_info) -> ~str
+    fn profile_info(&self, name: cl_platform_info) -> String
     {
         unsafe {
             let mut size = 0;
+            let mut buf;
 
             clGetPlatformInfo(self.id,
                             name,
@@ -72,38 +73,40 @@ impl Platform {
                             ptr::null(),
                             &mut size);
 
-            let value = " ".repeat(size as uint);
+            buf = Vec::from_elem(size as uint, 0u8);
 
             clGetPlatformInfo(self.id,
                               name,
-                              value.len() as libc::size_t,
-                              value.as_ptr() as *libc::c_void,
+                              buf.len() as libc::size_t,
+                              buf.as_ptr() as *libc::c_void,
                               &mut size);
-            value
+            
+            // TODO convert type cl_uint to a useful description
+            String::from_utf8(buf).unwrap_or(format!("Could not get platform info {:?}", name))
         }
     }
     
-    pub fn name(&self) -> ~str
+    pub fn name(&self) -> String
     {
         self.profile_info(CL_PLATFORM_NAME)
     }
     
-    pub fn version(&self) -> ~str
+    pub fn version(&self) -> String
     {
         self.profile_info(CL_PLATFORM_VERSION)
     }
     
-    pub fn profile(&self) -> ~str
+    pub fn profile(&self) -> String
     {
         self.profile_info(CL_PLATFORM_PROFILE)
     }
     
-    pub fn vendor(&self) -> ~str
+    pub fn vendor(&self) -> String
     {
         self.profile_info(CL_PLATFORM_VENDOR)
     }
     
-    pub fn extensions(&self) -> ~str
+    pub fn extensions(&self) -> String
     {
         self.profile_info(CL_PLATFORM_EXTENSIONS)
     }
@@ -145,9 +148,11 @@ pub struct Device {
 }
 
 impl Device {
-    pub fn name(&self) -> ~str {
+    pub fn name(&self) -> String {
         unsafe {
             let mut size = 0;
+            let mut buf;
+
             let status = clGetDeviceInfo(
                 self.id,
                 CL_DEVICE_NAME,
@@ -156,7 +161,7 @@ impl Device {
                 (&mut size));
             check(status, "Could not determine name length");
             
-            let mut buf = Vec::from_elem(size as uint, 0);
+            buf = Vec::from_elem(size as uint, 0u8);
             
             let status = clGetDeviceInfo(
                 self.id,
@@ -166,7 +171,7 @@ impl Device {
                 ptr::mut_null());
             check(status, "Could not get device name");
             
-            str::raw::from_c_str(buf.as_ptr() as *i8)
+            String::from_utf8(buf).unwrap_or(format!(""))
         }
     }
 
@@ -464,7 +469,7 @@ impl Program
     /// Build the program for a given device.
     ///
     /// Both Ok and Err returns include the build log.
-    pub fn build(&self, device: &Device) -> Result<~str, ~str>
+    pub fn build(&self, device: &Device) -> Result<String, String>
     {
         unsafe
         {
@@ -474,6 +479,8 @@ impl Program
                                      ptr::null());
             // Get the build log.
             let mut size = 0 as libc::size_t;
+            let mut buf;
+
             let status = clGetProgramBuildInfo(
                 self.prg,
                 device.id,
@@ -483,7 +490,8 @@ impl Program
                 (&mut size));
             check(status, "Could not get build log");
             
-            let mut buf = Vec::from_elem(size as uint, 0u8);
+            buf = Vec::from_elem(size as uint, 0u8);
+
             let status = clGetProgramBuildInfo(
                 self.prg,
                 device.id,
@@ -493,7 +501,7 @@ impl Program
                 ptr::mut_null());
             check(status, "Could not get build log");
             
-            let log = str::raw::from_c_str(buf.as_ptr() as *libc::c_char);
+            let log = String::from_utf8(buf).unwrap_or(format!(""));
 
             if ret == CL_SUCCESS as cl_int {
                 Ok(log)

@@ -1,4 +1,5 @@
 #[feature(link_args)];
+extern crate debug;
 extern crate OpenCL;
 
 use std::io::fs::File;

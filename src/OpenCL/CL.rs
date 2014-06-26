@@ -1,4 +1,5 @@
 #![allow(non_camel_case_types)]
+#![feature(unsafe_destructor)]
 
 extern crate std;
 
@@ -83,7 +84,7 @@ pub struct cl_buffer_region {
 
 
 /// OpenCL error codes.
-#[deriving(Eq)]
+#[deriving(PartialEq)]
 #[deriving(Show)]
 pub enum CLStatus {
     CL_SUCCESS = 0,

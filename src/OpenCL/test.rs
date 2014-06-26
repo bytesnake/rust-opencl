@@ -3,6 +3,7 @@
 #![feature(globs)]
 
 extern crate std;
+extern crate debug;
 extern crate OpenCL = "OpenCL#0.2";
 
 use OpenCL::hl::*;
@@ -163,11 +164,11 @@ mod hl {
             prog.build(&device).unwrap();
 
             let k = prog.create_kernel("test");
-            let v = ctx.create_buffer_from(&[1], CL_MEM_READ_WRITE);
+            let v = ctx.create_buffer_from(&[1i], CL_MEM_READ_WRITE);
 
             k.set_arg(0, &v);
 
-            queue.enqueue_async_kernel(&k, 1, None, ()).wait();
+            queue.enqueue_async_kernel(&k, 1u, None, ()).wait();
 
             let v: Vec<int> = queue.get(&v, ());
 
@@ -187,12 +188,12 @@ mod hl {
 
             let k = prog.create_kernel("test");
 
-            let v = ctx.create_buffer_from(&[1], CL_MEM_READ_WRITE);
+            let v = ctx.create_buffer_from(&[1i], CL_MEM_READ_WRITE);
 
             k.set_arg(0, &v);
-            k.set_arg(1, &42);
+            k.set_arg(1, &42i);
 
-            queue.enqueue_async_kernel(&k, 1, None, ()).wait();
+            queue.enqueue_async_kernel(&k, 1u, None, ()).wait();
 
             let v: Vec<int> = queue.get(&v, ());
 
@@ -212,11 +213,11 @@ mod hl {
 
             let k = prog.create_kernel("test");
 
-            let v = ctx.create_buffer_from(&[1], CL_MEM_READ_WRITE);
+            let v = ctx.create_buffer_from(&[1i], CL_MEM_READ_WRITE);
 
             k.set_arg(0, &v);
 
-            queue.enqueue_async_kernel(&k, 1, None, ()).wait();
+            queue.enqueue_async_kernel(&k, 1u, None, ()).wait();
 
             let v: Vec<int> = queue.get(&v, ());
 
@@ -235,13 +236,13 @@ mod hl {
             prog.build(&device).unwrap();
 
             let k = prog.create_kernel("test");
-            let v = ctx.create_buffer_from(&[1], CL_MEM_READ_WRITE);
+            let v = ctx.create_buffer_from(&[1i], CL_MEM_READ_WRITE);
 
             k.set_arg(0, &v);
 
             let mut e : Option<Event> = None;
-            for _ in range(0, 8) {
-                e = Some(queue.enqueue_async_kernel(&k, 1, None, e));
+            for _ in range(0u, 8u) {
+                e = Some(queue.enqueue_async_kernel(&k, 1u, None, e));
             }
             e.wait();
 
@@ -268,23 +269,23 @@ mod hl {
             let k_incB = prog.create_kernel("inc");
             let k_add = prog.create_kernel("add");
 
-            let a = ctx.create_buffer_from(&[1], CL_MEM_READ_WRITE);
-            let b = ctx.create_buffer_from(&[1], CL_MEM_READ_WRITE);
-            let c = ctx.create_buffer_from(&[1], CL_MEM_READ_WRITE);
+            let a = ctx.create_buffer_from(&[1i], CL_MEM_READ_WRITE);
+            let b = ctx.create_buffer_from(&[1i], CL_MEM_READ_WRITE);
+            let c = ctx.create_buffer_from(&[1i], CL_MEM_READ_WRITE);
 
             k_incA.set_arg(0, &a);
             k_incB.set_arg(0, &b);
 
             let event_list = &[
-                queue.enqueue_async_kernel(&k_incA, 1, None, ()),
-                queue.enqueue_async_kernel(&k_incB, 1, None, ()),
+                queue.enqueue_async_kernel(&k_incA, 1u, None, ()),
+                queue.enqueue_async_kernel(&k_incB, 1u, None, ()),
             ];
 
             k_add.set_arg(0, &a);
             k_add.set_arg(1, &b);
             k_add.set_arg(2, &c);
 
-            let event = queue.enqueue_async_kernel(&k_add, 1, None, event_list);
+            let event = queue.enqueue_async_kernel(&k_add, 1u, None, event_list);
 
             let v: Vec<int> = queue.get(&c, event);
 
@@ -315,11 +316,11 @@ mod hl {
 
             let k = prog.create_kernel("test");
 
-            let v = ctx.create_buffer_from(&[1, 2, 3, 4, 5, 6, 7, 8, 9], CL_MEM_READ_ONLY);
+            let v = ctx.create_buffer_from(&[1i, 2i, 3i, 4i, 5i, 6i, 7i, 8i, 9i], CL_MEM_READ_ONLY);
 
             k.set_arg(0, &v);
 
-            queue.enqueue_async_kernel(&k, (3, 3), None, ()).wait();
+            queue.enqueue_async_kernel(&k, (3u, 3u), None, ()).wait();
 
             let v: Vec<int> = queue.get(&v, ());
 
@@ -333,8 +334,8 @@ mod hl {
         ::test_all_platforms_devices(|_, ctx, queue| {
             let buffer: CLBuffer<int> = ctx.create_buffer(8, CL_MEM_READ_ONLY);
 
-            let input = &[0, 1, 2, 3, 4, 5, 6, 7];
-            let mut output = &mut [0, 0, 0, 0, 0, 0, 0, 0];
+            let input: &[int] = &[0, 1, 2, 3, 4, 5, 6, 7];
+            let mut output: &mut [int] = &mut [0, 0, 0, 0, 0, 0, 0, 0];
 
             queue.write(&buffer, &input, ());
             queue.read(&buffer, &mut output, ());
@@ -347,7 +348,7 @@ mod hl {
     fn memory_read_vec()
     {
         ::test_all_platforms_devices(|_, ctx, queue| {
-            let input = &[0, 1, 2, 3, 4, 5, 6, 7];
+            let input: &[int] = &[0, 1, 2, 3, 4, 5, 6, 7];
             let buffer = ctx.create_buffer_from(input, CL_MEM_READ_WRITE);
             let output: Vec<int> = queue.get(&buffer, ());
             expect!(input, output.as_slice());
@@ -359,7 +360,7 @@ mod hl {
     fn memory_read_owned()
     {
         ::test_all_platforms_devices(|_, ctx, queue| {
-            let input = vec!(0, 1, 2, 3, 4, 5, 6, 7);
+            let input: Vec<int> = vec!(0, 1, 2, 3, 4, 5, 6, 7);
             let buffer = ctx.create_buffer_from(&input, CL_MEM_READ_WRITE);
             let output: Vec<int> = queue.get(&buffer, ());
             expect!(input, output);
@@ -370,7 +371,7 @@ mod hl {
     fn memory_read_owned_clone()
     {
         ::test_all_platforms_devices(|_, ctx, queue| {
-            let input = vec!(0, 1, 2, 3, 4, 5, 6, 7);
+            let input: Vec<int> = vec!(0, 1, 2, 3, 4, 5, 6, 7);
             let buffer = ctx.create_buffer_from(input.clone(), CL_MEM_READ_WRITE);
             let output: Vec<int> = queue.get(&buffer, ());
             expect!(input, output);
@@ -388,11 +389,11 @@ mod hl {
         prog.build(&device).unwrap();
 
         let k = prog.create_kernel("test");
-        let v = ctx.create_buffer_from(&[1], CL_MEM_READ_WRITE);
+        let v = ctx.create_buffer_from(&[1i], CL_MEM_READ_WRITE);
 
         k.set_arg(0, &v);
 
-        let e = queue.enqueue_async_kernel(&k, 1, None, ());
+        let e = queue.enqueue_async_kernel(&k, 1u, None, ());
         e.wait();
 
         // the that are returned are not useful for unit test, this test
@@ -475,7 +476,7 @@ mod array {
             let k = prog.create_kernel("test");
 
             k.set_arg(0, &a_cl);
-            let event = queue.enqueue_async_kernel(&k, (8, 8), None, ());
+            let event = queue.enqueue_async_kernel(&k, (8u, 8u), None, ());
             queue.read(&a_cl, &mut a, &event);
 
             for x in range(0u, 8u) {
@@ -558,7 +559,7 @@ mod array {
             let k = prog.create_kernel("test");
 
             k.set_arg(0, &a_cl);
-            let event = queue.enqueue_async_kernel(&k, (8, 8, 8), None, ());
+            let event = queue.enqueue_async_kernel(&k, (8u, 8u, 8u), None, ());
             queue.read(&a_cl, &mut a, &event);
 
             for x in range(0u, 8u) {
